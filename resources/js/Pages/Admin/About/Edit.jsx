@@ -4,32 +4,32 @@ import AdminLayout from '@/Layouts/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import RichTextEditor from '@/Components/RichTextEditor';
 
 const tabs = [
-    { key: 'info', label: 'Basic Info' },
-    { key: 'social', label: 'Social Media' },
-    { key: 'content', label: 'Content' },
+    { key: 'info', label: 'Basic Info', icon: 'fa-building' },
+    { key: 'social', label: 'Social Media', icon: 'fa-share-nodes' },
+    { key: 'content', label: 'Content', icon: 'fa-pen-to-square' },
 ];
 
 export default function AboutEdit({ about }) {
     const [activeTab, setActiveTab] = useState('info');
 
     const { data, setData, put, processing, errors } = useForm({
-        company: about?.company || '',
-        email: about?.email || '',
-        phone: about?.phone || '',
-        fax: about?.fax || '',
-        cell: about?.cell || '',
-        address: about?.address || '',
-        maps: about?.maps || '',
-        linkedin: about?.linkedin || '',
-        instagram: about?.instagram || '',
-        twitter: about?.twitter || '',
-        facebook: about?.facebook || '',
+        company:    about?.company    || '',
+        email:      about?.email      || '',
+        phone:      about?.phone      || '',
+        fax:        about?.fax        || '',
+        cell:       about?.cell       || '',
+        address:    about?.address    || '',
+        maps:       about?.maps       || '',
+        linkedin:   about?.linkedin   || '',
+        instagram:  about?.instagram  || '',
+        twitter:    about?.twitter    || '',
+        facebook:   about?.facebook   || '',
         link_video: about?.link_video || '',
-        content: about?.content || '',
+        content:    about?.content    || '',
     });
 
     function handleSubmit(e) {
@@ -41,7 +41,7 @@ export default function AboutEdit({ about }) {
         <AdminLayout title="Company Information">
             <Head title="About | Admin" />
 
-            <div className="max-w-4xl">
+            <div className="max-w-7xl">
                 <h2 className="text-xl font-semibold mb-6">Company Information</h2>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -52,12 +52,13 @@ export default function AboutEdit({ about }) {
                                 key={tab.key}
                                 type="button"
                                 onClick={() => setActiveTab(tab.key)}
-                                className={`px-5 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                                className={`flex items-center gap-2 px-5 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                                     activeTab === tab.key
                                         ? 'border-brand-dark text-brand-dark'
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                 }`}
                             >
+                                <i className={`fas ${tab.icon} text-xs`} />
                                 {tab.label}
                             </button>
                         ))}
@@ -112,14 +113,17 @@ export default function AboutEdit({ about }) {
                             <CardHeader><CardTitle>Social Media Links</CardTitle></CardHeader>
                             <CardContent className="space-y-4">
                                 {[
-                                    { key: 'facebook', label: 'Facebook URL', icon: 'fa-facebook' },
-                                    { key: 'instagram', label: 'Instagram URL', icon: 'fa-instagram' },
-                                    { key: 'twitter', label: 'Twitter URL', icon: 'fa-twitter' },
-                                    { key: 'linkedin', label: 'LinkedIn URL', icon: 'fa-linkedin' },
-                                    { key: 'link_video', label: 'Video Link (YouTube etc.)', icon: 'fa-video' },
-                                ].map(({ key, label, icon }) => (
+                                    { key: 'facebook',   label: 'Facebook',  icon: 'fa-facebook',  prefix: 'fab' },
+                                    { key: 'instagram',  label: 'Instagram', icon: 'fa-instagram', prefix: 'fab' },
+                                    { key: 'twitter',    label: 'Twitter / X', icon: 'fa-twitter', prefix: 'fab' },
+                                    { key: 'linkedin',   label: 'LinkedIn',  icon: 'fa-linkedin',  prefix: 'fab' },
+                                    { key: 'link_video', label: 'Vidéo (YouTube…)', icon: 'fa-video', prefix: 'fas' },
+                                ].map(({ key, label, icon, prefix }) => (
                                     <div key={key}>
-                                        <Label><i className={`fab ${icon} mr-2 text-gray-400`} />{label}</Label>
+                                        <Label>
+                                            <i className={`${prefix} ${icon} mr-2 text-gray-400`} />
+                                            {label}
+                                        </Label>
                                         <Input value={data[key]} onChange={e => setData(key, e.target.value)} placeholder="https://..." />
                                         {errors[key] && <p className="text-red-500 text-xs mt-1">{errors[key]}</p>}
                                     </div>
@@ -128,27 +132,61 @@ export default function AboutEdit({ about }) {
                         </Card>
                     )}
 
-                    {/* Tab: Content */}
+                    {/* Tab: Content — editor + live preview */}
                     {activeTab === 'content' && (
-                        <Card>
-                            <CardHeader><CardTitle>About Content</CardTitle></CardHeader>
-                            <CardContent>
-                                <Label>Content (HTML supported)</Label>
-                                <Textarea
-                                    value={data.content}
-                                    onChange={e => setData('content', e.target.value)}
-                                    rows={12}
-                                    placeholder="Enter company description/about content..."
-                                    className="font-mono text-sm mt-1"
-                                />
-                                {errors.content && <p className="text-red-500 text-xs mt-1">{errors.content}</p>}
-                            </CardContent>
-                        </Card>
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+                            {/* Editor */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <i className="fas fa-pen-to-square text-brand-green" />
+                                        Éditeur
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <RichTextEditor
+                                        value={data.content}
+                                        onChange={(val) => setData('content', val)}
+                                    />
+                                    {errors.content && <p className="text-red-500 text-xs mt-2">{errors.content}</p>}
+                                </CardContent>
+                            </Card>
+
+                            {/* Live preview */}
+                            <Card className="sticky top-24">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <i className="fas fa-eye text-brand-green" />
+                                        Aperçu (rendu Frontend)
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="border border-gray-100 rounded-xl overflow-hidden shadow-sm">
+                                        {/* Simulated page header */}
+                                        <div className="bg-brand-dark px-6 py-4 flex items-center gap-3">
+                                            <div className="w-8 h-0.5 bg-brand-green" />
+                                            <span className="text-white font-bold text-sm">About Us</span>
+                                        </div>
+                                        {/* Content rendered with site styles */}
+                                        <div className="bg-white px-6 py-6 min-h-[240px]">
+                                            {data.content ? (
+                                                <div
+                                                    className="prose prose-gray max-w-none text-gray-600 leading-relaxed"
+                                                    dangerouslySetInnerHTML={{ __html: data.content }}
+                                                />
+                                            ) : (
+                                                <p className="text-gray-300 italic text-sm">Commencez à écrire pour voir l'aperçu…</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
                     )}
 
-                    <div className="flex gap-3">
+                    <div>
                         <Button type="submit" disabled={processing} className="bg-brand-dark text-brand-green hover:bg-brand-gray">
-                            {processing ? 'Saving...' : 'Save Changes'}
+                            {processing ? 'Enregistrement…' : 'Save Changes'}
                         </Button>
                     </div>
                 </form>
