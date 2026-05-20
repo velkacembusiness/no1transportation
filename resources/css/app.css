@@ -82,3 +82,79 @@
   .hover\:bg-brand-green-dark:hover { background-color: #A8C255; }
   .hover\:text-brand-green:hover { color: #C8E07A; }
 }
+
+/* ── Pikaday brand overrides ─────────────────────────────────────────── */
+.pika-single {
+  font-family: 'Open Sans', sans-serif;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,.08);
+  overflow: hidden;
+}
+
+.pika-title {
+  background: #111111;
+  padding: 8px 4px;
+}
+
+.pika-label {
+  color: #C8E07A !important;
+  font-weight: 700;
+  font-size: 0.875rem;
+  background: transparent !important;
+}
+
+.pika-prev,
+.pika-next {
+  opacity: 1;
+  filter: brightness(0) saturate(100%) invert(88%) sepia(32%) saturate(500%) hue-rotate(27deg) brightness(103%);
+}
+.pika-prev:hover,
+.pika-next:hover {
+  filter: brightness(0) saturate(100%) invert(100%);
+}
+
+.pika-table th {
+  color: #6b7280;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.pika-button {
+  border-radius: 0.375rem;
+  font-size: 0.8rem;
+  text-align: center;
+  color: #111111;
+  transition: background-color 0.15s, color 0.15s;
+}
+.pika-button:hover {
+  background: #111111 !important;
+  color: #C8E07A !important;
+  border-radius: 0.375rem;
+}
+
+.is-selected .pika-button,
+.is-selected .pika-button:hover {
+  background: #C8E07A !important;
+  color: #111111 !important;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.is-today .pika-button {
+  color: #111111;
+  font-weight: 700;
+  border: 2px solid #C8E07A;
+}
+
+.is-disabled .pika-button,
+.is-outside-current-month .pika-button {
+  color: #d1d5db;
+  cursor: default;
+}
+.is-disabled .pika-button:hover {
+  background: transparent !important;
+  color: #d1d5db !important;
+}
