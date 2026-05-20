@@ -1,6 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
 import PublicLayout from '@/Layouts/PublicLayout';
-import { Card, CardContent } from '@/components/ui/card';
 
 function BreadcrumbBanner({ title, current }) {
     return (
@@ -45,31 +44,34 @@ export default function Services({ abouts, services }) {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
                                 {data.map((service) => (
-                                    <Card key={service.id} className="overflow-hidden hover:shadow-xl transition-all group border-0 shadow-md">
+                                    <div key={service.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow group">
                                         {service.image && (
-                                            <div className="overflow-hidden h-48">
+                                            <div className="overflow-hidden h-52">
                                                 <img
                                                     src={`/storage/${service.image}`}
                                                     alt={service.name}
-                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                                 />
                                             </div>
                                         )}
-                                        <CardContent className="p-5">
-                                            <div className="w-8 h-1 bg-brand-green mb-3" />
-                                            <h3 className="font-bold text-lg mb-2">
-                                                <Link href={route('service.show', service.slug)} className="text-brand-dark hover:text-brand-gray transition-colors">
+                                        <div className="p-6">
+                                            <div className="w-8 h-1 bg-brand-green mb-4" />
+                                            <h3 className="font-bold text-lg text-brand-dark mb-2">
+                                                <Link href={route('service.show', service.slug)} className="hover:text-brand-gray transition-colors">
                                                     {service.name}
                                                 </Link>
                                             </h3>
                                             {service.description && (
-                                                <p className="text-gray-500 text-sm line-clamp-3">{service.description}</p>
+                                                <p className="text-gray-500 text-sm leading-relaxed line-clamp-3">{service.description}</p>
                                             )}
-                                            <Link href={route('service.show', service.slug)} className="inline-flex items-center gap-1 mt-4 text-sm font-semibold text-brand-dark hover:text-brand-gray transition-colors">
-                                                Learn more <i className="fas fa-arrow-right text-xs" />
+                                            <Link
+                                                href={route('service.show', service.slug)}
+                                                className="inline-flex items-center gap-1.5 mt-5 text-sm font-bold text-brand-dark hover:text-brand-gray transition-colors"
+                                            >
+                                                Learn more →
                                             </Link>
-                                        </CardContent>
-                                    </Card>
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
 

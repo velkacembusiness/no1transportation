@@ -33,11 +33,13 @@ export default function ServiceDetail({ abouts, service, otherServices = [] }) {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                         <div className="lg:col-span-2">
                             {service.image && (
-                                <img
-                                    src={`/storage/${service.image}`}
-                                    alt={service.name}
-                                    className="w-full h-64 object-cover rounded-2xl mb-8"
-                                />
+                                <div className="overflow-hidden rounded-2xl shadow-md mb-6">
+                                    <img
+                                        src={`/storage/${service.image}`}
+                                        alt={service.name}
+                                        className="w-full h-80 object-cover"
+                                    />
+                                </div>
                             )}
                             <div className="inline-block w-12 h-1 bg-brand-green mb-4" />
                             <h2 className="text-3xl font-bold text-brand-dark mb-6">{service.name}</h2>
