@@ -49,6 +49,13 @@ export default function Contact({ abouts }) {
         post(route('contact.store'), { onSuccess: () => reset() });
     }
 
+    function formatPhone(value) {
+        const digits = value.replace(/\D/g, '').slice(0, 10);
+        if (digits.length < 4)  return digits;
+        if (digits.length < 7)  return `(${digits.slice(0,3)}) ${digits.slice(3)}`;
+        return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+    }
+
     return (
         <PublicLayout abouts={abouts}>
             <Head title="Contact Us | NO Transportation LLC" />
@@ -97,8 +104,8 @@ export default function Contact({ abouts }) {
                                         <input
                                             type="tel"
                                             value={data.phone_number}
-                                            onChange={e => setData('phone_number', e.target.value)}
-                                            placeholder="Your phone number"
+                                            onChange={e => setData('phone_number', formatPhone(e.target.value))}
+                                            placeholder="(555) 555-5555"
                                             className={fieldClass}
                                         />
                                     </Field>

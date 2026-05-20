@@ -12,16 +12,20 @@ class ContactController extends Controller
 {
     public function store(Request $request)
     {
+//        dd($request);
         $contact = $request->validate([
-            'full_name' => 'required',
-            'phone_number' => 'required',
-            'email_address' => ['required', 'email', 'indisposable', new ValidEmailDns()],
-            'message' => 'required|min:5',
-            'g-recaptcha-response' => [new ReCaptcha()],
+            'full_name'             => 'required|string|max:100',
+            'phone_number'          => ['required', 'regex:/^\(\d{3}\) \d{3}-\d{4}$/'],
+            'email_address'         => ['required', 'email', 'indisposable', new ValidEmailDns()],
+            'message'               => 'required|min:5|max:2000',
+//            'g-recaptcha-response'  => [new ReCaptcha()],
+        ], [
+            'phone_number.required' => 'The phone number is required.',
+            'phone_number.regex'    => 'Please enter a valid phone number in the format (555) 555-5555.',
         ]);
 
-        Mail::to('contact@mnatransportation.com')->queue(new ContactForm($contact));
+        Mail::to('contact@no1transportation.com')->queue(new ContactForm($contact));
 
-        return redirect()->route('home')->with('success', '✅ We have received your message and will respond as soon as possible!');
+        return redirect()->route('contact')->with('success', 'Your message has been sent successfully! We will get back to you within 24 hours.');
     }
 }
