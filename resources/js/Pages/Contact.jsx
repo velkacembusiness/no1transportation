@@ -1,8 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import PublicLayout from '@/Layouts/PublicLayout';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 
 function BreadcrumbBanner({ title, current }) {
     return (
@@ -25,6 +22,19 @@ function BreadcrumbBanner({ title, current }) {
     );
 }
 
+function Field({ label, error, children }) {
+    return (
+        <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-gray-700">{label}</label>
+            {children}
+            {error && <p className="text-red-500 text-xs">{error}</p>}
+        </div>
+    );
+}
+
+const fieldClass =
+    'w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-800 placeholder-gray-400 outline-none transition focus:bg-white focus:border-brand-dark focus:ring-2 focus:ring-brand-dark/10';
+
 export default function Contact({ abouts }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         full_name: '',
@@ -45,46 +55,81 @@ export default function Contact({ abouts }) {
             <BreadcrumbBanner title="Contact Us" current="Contact" />
 
             {/* Contact Form */}
-            <section className="py-16">
+            <section className="py-20 bg-white">
                 <div className="container mx-auto px-4">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-                        <div className="hidden lg:flex justify-center">
-                            <img src="/images/contact.png" alt="Contact Us" className="max-w-full h-auto rounded-2xl shadow-lg" />
+                    <div className="max-w-2xl mx-auto">
+
+                        {/* Header */}
+                        <div className="text-center mb-10">
+                            <h2 className="text-3xl font-extrabold text-gray-900 mb-3">Contact Our Team</h2>
+                            <p className="text-gray-500 text-sm">
+                                For inquiries, scheduling, or general information, please fill out the form below. A member of our team will respond within 24 hours.
+                            </p>
                         </div>
 
-                        <div>
-                            <div className="inline-block w-12 h-1 bg-brand-green mb-4" />
-                            <h2 className="text-2xl font-bold text-brand-dark mb-2">Have questions or need a ride?</h2>
-                            <p className="text-gray-500 italic mb-6">Fill out the form below and our team will get back to you shortly.</p>
+                        {/* Form card */}
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+                            <form onSubmit={handleSubmit} className="space-y-5">
 
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <div>
-                                    <Label>Full Name *</Label>
-                                    <Input value={data.full_name} onChange={e => setData('full_name', e.target.value)} placeholder="Full Name" className="focus:border-brand-green focus:ring-brand-green" />
-                                    {errors.full_name && <p className="text-red-500 text-xs mt-1">{errors.full_name}</p>}
+                                {/* Full Name */}
+                                <Field label="Full Name" error={errors.full_name}>
+                                    <input
+                                        type="text"
+                                        value={data.full_name}
+                                        onChange={e => setData('full_name', e.target.value)}
+                                        placeholder="Full Name"
+                                        className={fieldClass}
+                                    />
+                                </Field>
+
+                                {/* Email + Phone */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <Field label="Email Address" error={errors.email_address}>
+                                        <input
+                                            type="email"
+                                            value={data.email_address}
+                                            onChange={e => setData('email_address', e.target.value)}
+                                            placeholder="example@gmail.com"
+                                            className={fieldClass}
+                                        />
+                                    </Field>
+                                    <Field label="Phone Number" error={errors.phone_number}>
+                                        <input
+                                            type="tel"
+                                            value={data.phone_number}
+                                            onChange={e => setData('phone_number', e.target.value)}
+                                            placeholder="Your phone number"
+                                            className={fieldClass}
+                                        />
+                                    </Field>
                                 </div>
-                                <div>
-                                    <Label>Email Address *</Label>
-                                    <Input type="email" value={data.email_address} onChange={e => setData('email_address', e.target.value)} placeholder="Enter email" />
-                                    {errors.email_address && <p className="text-red-500 text-xs mt-1">{errors.email_address}</p>}
+
+                                {/* Message */}
+                                <Field label="Message" error={errors.message}>
+                                    <textarea
+                                        value={data.message}
+                                        onChange={e => setData('message', e.target.value)}
+                                        placeholder="Your message...?"
+                                        rows={7}
+                                        className={fieldClass + ' resize-y'}
+                                    />
+                                </Field>
+
+                                {/* Submit */}
+                                <div className="pt-1">
+                                    <button
+                                        type="submit"
+                                        disabled={processing}
+                                        className="px-8 py-3 bg-brand-green text-brand-dark rounded-full font-bold text-sm hover:bg-brand-green-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {processing ? (
+                                            <span className="flex items-center gap-2">
+                                                <i className="fas fa-circle-notch fa-spin" />
+                                                Sending…
+                                            </span>
+                                        ) : 'Submit form'}
+                                    </button>
                                 </div>
-                                <div>
-                                    <Label>Phone Number *</Label>
-                                    <Input value={data.phone_number} onChange={e => setData('phone_number', e.target.value)} placeholder="Phone Number" />
-                                    {errors.phone_number && <p className="text-red-500 text-xs mt-1">{errors.phone_number}</p>}
-                                </div>
-                                <div>
-                                    <Label>Your Message *</Label>
-                                    <Textarea value={data.message} onChange={e => setData('message', e.target.value)} placeholder="Your message...?" rows={8} />
-                                    {errors.message && <p className="text-red-500 text-xs mt-1">{errors.message}</p>}
-                                </div>
-                                <button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="w-full py-3 bg-brand-dark text-brand-green rounded-full font-bold hover:bg-brand-gray transition-all disabled:opacity-50"
-                                >
-                                    {processing ? 'Sending...' : 'Send Message'}
-                                </button>
                             </form>
                         </div>
                     </div>
@@ -97,8 +142,8 @@ export default function Contact({ abouts }) {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {[
                             { icon: 'fa-location-dot', label: 'Company Address', value: abouts?.address },
-                            { icon: 'fa-envelope', label: 'E-mail', value: abouts?.email },
-                            { icon: 'fa-phone-alt', label: 'Phone Numbers', value: abouts?.phone },
+                            { icon: 'fa-envelope',     label: 'E-mail',          value: abouts?.email },
+                            { icon: 'fa-phone-alt',    label: 'Phone Numbers',   value: abouts?.phone },
                         ].map((item, i) => (
                             <div key={i} className="bg-white rounded-2xl p-6 text-center shadow-sm border-b-4 border-brand-green hover:shadow-md transition-shadow">
                                 <div className="w-12 h-12 bg-brand-dark rounded-xl flex items-center justify-center mx-auto mb-3">
