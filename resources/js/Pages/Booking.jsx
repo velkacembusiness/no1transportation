@@ -1,6 +1,10 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import PublicLayout from '@/Layouts/PublicLayout';
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
+import Pikaday from 'pikaday';
+import 'pikaday/css/pikaday.css';
 
 const safetyItems = [
     'CPR/First Aid',
@@ -53,47 +57,84 @@ const selClass =
     'w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-800 outline-none transition focus:bg-white focus:border-brand-dark focus:ring-2 focus:ring-brand-dark/10 cursor-pointer';
 
 function DateInput({ value, onChange }) {
-    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+    const inputRef = useRef(null);
+    const pkRef    = useRef(null);
+
+    const toISO = d =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+    useEffect(() => {
+        pkRef.current = new Pikaday({
+            field: inputRef.current,
+            toString: date =>
+                `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}/${date.getFullYear()}`,
+            parse: str => {
+                const [m, d, y] = str.split('/');
+                return new Date(+y, +m - 1, +d);
+            },
+            minDate: new Date(Date.now() + 86400000),
+            onSelect: date => onChange(toISO(date)),
+        });
+        if (value) pkRef.current.setDate(new Date(value + 'T00:00:00'), true);
+        return () => pkRef.current?.destroy();
+    }, []);
+
+    useEffect(() => {
+        if (!pkRef.current) return;
+        if (value) pkRef.current.setDate(new Date(value + 'T00:00:00'), true);
+        else pkRef.current.clear();
+    }, [value]);
+
     return (
         <div className="relative">
             <input
-                type="date"
-                value={value}
-                onChange={onChange}
-                min={tomorrow}
-                className={fieldClass + ' pr-10'}
+                ref={inputRef}
+                readOnly
+                placeholder="MM/DD/YYYY"
+                className={fieldClass + ' pr-10 cursor-pointer'}
             />
-            <i className="fas fa-calendar-alt absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-sm" />
+            <i className="fas fa-calendar-alt absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none" />
         </div>
     );
 }
 
-function TimePicker({ value, onChange }) {
-    const parse = v => {
-        if (!v) return { h: '08', m: '00', p: 'AM' };
-        const mt = v.match(/^(\d{1,2}):(\d{2}) (AM|PM)$/);
-        return mt ? { h: mt[1].padStart(2, '0'), m: mt[2], p: mt[3] } : { h: '08', m: '00', p: 'AM' };
-    };
-    const { h, m, p } = parse(value);
-    const emit = (nh, nm, np) => onChange(`${nh}:${nm} ${np}`);
-    const tSel =
-        'bg-gray-50 border border-gray-200 rounded-lg px-2 py-2.5 text-sm text-gray-800 outline-none focus:bg-white focus:border-brand-dark focus:ring-2 focus:ring-brand-dark/10 cursor-pointer';
+function TimeInput({ value, onChange, placeholder = 'Select time' }) {
+    const inputRef = useRef(null);
+    const fpRef    = useRef(null);
+
+    useEffect(() => {
+        fpRef.current = flatpickr(inputRef.current, {
+            enableTime:  true,
+            noCalendar:  true,
+            dateFormat:  'h:i K',
+            time_24hr:   false,
+            defaultDate: value || undefined,
+            onChange: ([date]) => {
+                const h      = date.getHours();
+                const m      = date.getMinutes();
+                const period = h >= 12 ? 'PM' : 'AM';
+                const hour   = h % 12 || 12;
+                onChange(`${String(hour).padStart(2, '0')}:${String(m).padStart(2, '0')} ${period}`);
+            },
+        });
+        return () => fpRef.current?.destroy();
+    }, []);
+
+    useEffect(() => {
+        if (fpRef.current && value) {
+            fpRef.current.setDate(value, false);
+        }
+    }, [value]);
 
     return (
-        <div className="flex items-center gap-2">
-            <select value={h} onChange={e => emit(e.target.value, m, p)} className={tSel}>
-                {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map(v => (
-                    <option key={v} value={v}>{v}</option>
-                ))}
-            </select>
-            <span className="text-gray-400 font-bold text-sm">:</span>
-            <select value={m} onChange={e => emit(h, e.target.value, p)} className={tSel}>
-                {['00', '15', '30', '45'].map(v => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <select value={p} onChange={e => emit(h, m, e.target.value)} className={`${tSel} font-semibold`}>
-                <option value="AM">AM</option>
-                <option value="PM">PM</option>
-            </select>
+        <div className="relative">
+            <input
+                ref={inputRef}
+                readOnly
+                placeholder={placeholder}
+                className={fieldClass + ' pr-10 cursor-pointer'}
+            />
+            <i className="fas fa-clock absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none" />
         </div>
     );
 }
@@ -221,33 +262,31 @@ export default function Booking({ abouts, activities = [], payers = [], captchaQ
                                 <Field label="Date of Ride *" error={errors.date_of_ride}>
                                     <DateInput
                                         value={data.date_of_ride}
-                                        onChange={e => setData('date_of_ride', e.target.value)}
+                                        onChange={iso => setData('date_of_ride', iso)}
                                     />
                                 </Field>
 
-                                {/* Pick Up Time */}
-                                <Field label="Pick Up Time *" error={errors.time_of_ride}>
-                                    <TimePicker
-                                        value={data.time_of_ride}
-                                        onChange={v => setData('time_of_ride', v)}
-                                    />
-                                </Field>
-
-                                {/* Appointment Time */}
-                                <Field label="Appointment Time *" error={errors.appointment_time}>
-                                    <TimePicker
-                                        value={data.appointment_time}
-                                        onChange={v => setData('appointment_time', v)}
-                                    />
-                                </Field>
-
-                                {/* Return Time */}
-                                <Field label="Return Time *" error={errors.return_time}>
-                                    <TimePicker
-                                        value={data.return_time}
-                                        onChange={v => setData('return_time', v)}
-                                    />
-                                </Field>
+                                {/* Times — same row */}
+                                <div className="grid grid-cols-3 gap-4">
+                                    <Field label="Pick Up Time *" error={errors.time_of_ride}>
+                                        <TimeInput
+                                            value={data.time_of_ride}
+                                            onChange={v => setData('time_of_ride', v)}
+                                        />
+                                    </Field>
+                                    <Field label="Appointment Time *" error={errors.appointment_time}>
+                                        <TimeInput
+                                            value={data.appointment_time}
+                                            onChange={v => setData('appointment_time', v)}
+                                        />
+                                    </Field>
+                                    <Field label="Return Time *" error={errors.return_time}>
+                                        <TimeInput
+                                            value={data.return_time}
+                                            onChange={v => setData('return_time', v)}
+                                        />
+                                    </Field>
+                                </div>
 
                                 {/* Pick Up Location */}
                                 <Field label="Pick Up Location *" error={errors.pick_up_location}>
