@@ -1,9 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
+import { useState } from 'react';
 import PublicLayout from '@/Layouts/PublicLayout';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const safetyItems = [
     'CPR/First Aid',
@@ -35,28 +32,116 @@ function BreadcrumbBanner({ title, current }) {
     );
 }
 
-export default function Booking({ abouts, activities = [], payers = [] }) {
-    const { data, setData, post, processing, errors } = useForm({
-        patient_name: '',
-        email_address: '',
-        phone_number: '',
-        patient_weight: '',
-        date_of_ride: '',
-        time_of_ride: '',
-        appointment_time: '',
-        return_time: '',
-        pick_up_location: '',
-        drop_off_location: '',
-        type_of_service: '',
-        payer_ride: '',
+function Field({ label, error, children }) {
+    return (
+        <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-gray-700">{label}</label>
+            {children}
+            {error && (
+                <p className="text-red-500 text-xs flex items-center gap-1">
+                    <i className="fas fa-circle-exclamation" /> {error}
+                </p>
+            )}
+        </div>
+    );
+}
+
+const fieldClass =
+    'w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-800 placeholder-gray-400 outline-none transition focus:bg-white focus:border-brand-dark focus:ring-2 focus:ring-brand-dark/10';
+
+const selClass =
+    'w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-800 outline-none transition focus:bg-white focus:border-brand-dark focus:ring-2 focus:ring-brand-dark/10 cursor-pointer';
+
+function DateInput({ value, onChange }) {
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+    return (
+        <div className="relative">
+            <input
+                type="date"
+                value={value}
+                onChange={onChange}
+                min={tomorrow}
+                className={fieldClass + ' pr-10'}
+            />
+            <i className="fas fa-calendar-alt absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-sm" />
+        </div>
+    );
+}
+
+function TimePicker({ value, onChange }) {
+    const parse = v => {
+        if (!v) return { h: '08', m: '00', p: 'AM' };
+        const mt = v.match(/^(\d{1,2}):(\d{2}) (AM|PM)$/);
+        return mt ? { h: mt[1].padStart(2, '0'), m: mt[2], p: mt[3] } : { h: '08', m: '00', p: 'AM' };
+    };
+    const { h, m, p } = parse(value);
+    const emit = (nh, nm, np) => onChange(`${nh}:${nm} ${np}`);
+    const tSel =
+        'bg-gray-50 border border-gray-200 rounded-lg px-2 py-2.5 text-sm text-gray-800 outline-none focus:bg-white focus:border-brand-dark focus:ring-2 focus:ring-brand-dark/10 cursor-pointer';
+
+    return (
+        <div className="flex items-center gap-2">
+            <select value={h} onChange={e => emit(e.target.value, m, p)} className={tSel}>
+                {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map(v => (
+                    <option key={v} value={v}>{v}</option>
+                ))}
+            </select>
+            <span className="text-gray-400 font-bold text-sm">:</span>
+            <select value={m} onChange={e => emit(h, e.target.value, p)} className={tSel}>
+                {['00', '15', '30', '45'].map(v => <option key={v} value={v}>{v}</option>)}
+            </select>
+            <select value={p} onChange={e => emit(h, m, e.target.value)} className={`${tSel} font-semibold`}>
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+            </select>
+        </div>
+    );
+}
+
+function formatPhone(value) {
+    const digits = value.replace(/\D/g, '').slice(0, 10);
+    if (digits.length < 4) return digits;
+    if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
+export default function Booking({ abouts, activities = [], payers = [], captchaQuestion: initialQuestion }) {
+    const [captchaQuestion, setCaptchaQuestion] = useState(initialQuestion);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const { data, setData, post, processing, errors, reset } = useForm({
+        patient_name:         '',
+        email_address:        '',
+        phone_number:         '',
+        patient_weight:       '',
+        date_of_ride:         '',
+        time_of_ride:         '08:00 AM',
+        appointment_time:     '10:00 AM',
+        return_time:          '12:00 PM',
+        pick_up_location:     '',
+        drop_off_location:    '',
+        type_of_service:      '',
+        payer_ride:           '',
         special_instructions: '',
-        confirmation: false,
-        'g-recaptcha-response': '',
+        confirmation:         false,
+        captcha_answer:       '',
     });
 
     function handleSubmit(e) {
         e.preventDefault();
-        post(route('booking.store'));
+        post(route('booking.store'), { onSuccess: () => reset() });
+    }
+
+    async function refreshCaptcha() {
+        setRefreshing(true);
+        setData('captcha_answer', '');
+        try {
+            const res  = await fetch(route('captcha.refresh'));
+            const json = await res.json();
+            setCaptchaQuestion(json.question);
+        } finally {
+            setRefreshing(false);
+        }
     }
 
     return (
@@ -65,127 +150,237 @@ export default function Booking({ abouts, activities = [], payers = [] }) {
             <BreadcrumbBanner title="Book an Appointment" current="Booking" />
 
             {/* Booking Form */}
-            <section className="py-16">
+            <section className="py-16 bg-white">
                 <div className="container mx-auto px-4">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+
+                        {/* Left — illustration */}
                         <div className="hidden lg:flex justify-center">
                             <img src="/images/contact.png" alt="Book a ride" className="max-w-full h-auto rounded-2xl shadow-lg" />
                         </div>
 
+                        {/* Right — form */}
                         <div>
                             <div className="inline-block w-12 h-1 bg-brand-green mb-4" />
                             <h2 className="text-2xl font-bold text-brand-dark mb-2">Need a ride?</h2>
-                            <p className="text-gray-500 italic mb-6">Use the form below to book your transportation with us.</p>
+                            <p className="text-gray-500 text-sm italic mb-6">Use the form below to book your transportation with us.</p>
 
                             {errors.times && (
-                                <Alert variant="destructive" className="mb-4">
-                                    <AlertDescription>{errors.times}</AlertDescription>
-                                </Alert>
+                                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex items-center gap-2">
+                                    <i className="fas fa-circle-exclamation" /> {errors.times}
+                                </div>
                             )}
 
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <Label>Patient Name *</Label>
-                                        <Input value={data.patient_name} onChange={e => setData('patient_name', e.target.value)} placeholder="Enter Name" />
-                                        {errors.patient_name && <p className="text-red-500 text-xs mt-1">{errors.patient_name}</p>}
-                                    </div>
-                                    <div>
-                                        <Label>Email Address *</Label>
-                                        <Input type="email" value={data.email_address} onChange={e => setData('email_address', e.target.value)} placeholder="Enter email" />
-                                        {errors.email_address && <p className="text-red-500 text-xs mt-1">{errors.email_address}</p>}
-                                    </div>
+                            <form onSubmit={handleSubmit} className="space-y-5">
+
+                                {/* Patient Name + Email */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <Field label="Patient Name *" error={errors.patient_name}>
+                                        <input
+                                            type="text"
+                                            value={data.patient_name}
+                                            onChange={e => setData('patient_name', e.target.value)}
+                                            placeholder="Full name"
+                                            className={fieldClass}
+                                        />
+                                    </Field>
+                                    <Field label="Email Address *" error={errors.email_address}>
+                                        <input
+                                            type="email"
+                                            value={data.email_address}
+                                            onChange={e => setData('email_address', e.target.value)}
+                                            placeholder="example@gmail.com"
+                                            className={fieldClass}
+                                        />
+                                    </Field>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <Label>Phone Number *</Label>
-                                        <Input value={data.phone_number} onChange={e => setData('phone_number', e.target.value)} placeholder="(000) 000-0000" />
-                                        {errors.phone_number && <p className="text-red-500 text-xs mt-1">{errors.phone_number}</p>}
-                                    </div>
-                                    <div>
-                                        <Label>Patient Weight (lbs) *</Label>
-                                        <Input type="number" value={data.patient_weight} onChange={e => setData('patient_weight', e.target.value)} placeholder="Patient weight" />
-                                        {errors.patient_weight && <p className="text-red-500 text-xs mt-1">{errors.patient_weight}</p>}
-                                    </div>
+                                {/* Phone + Weight */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <Field label="Phone Number *" error={errors.phone_number}>
+                                        <input
+                                            type="tel"
+                                            value={data.phone_number}
+                                            onChange={e => setData('phone_number', formatPhone(e.target.value))}
+                                            placeholder="(555) 555-5555"
+                                            className={fieldClass}
+                                        />
+                                    </Field>
+                                    <Field label="Patient Weight (lbs) *" error={errors.patient_weight}>
+                                        <input
+                                            type="number"
+                                            value={data.patient_weight}
+                                            onChange={e => setData('patient_weight', e.target.value)}
+                                            placeholder="e.g. 150"
+                                            className={fieldClass}
+                                        />
+                                    </Field>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <Label>Date of Ride *</Label>
-                                        <Input type="date" value={data.date_of_ride} onChange={e => setData('date_of_ride', e.target.value)} min={new Date(Date.now() + 86400000).toISOString().split('T')[0]} />
-                                        {errors.date_of_ride && <p className="text-red-500 text-xs mt-1">{errors.date_of_ride}</p>}
-                                    </div>
-                                    <div>
-                                        <Label>Pick Up Time *</Label>
-                                        <Input type="time" value={data.time_of_ride} onChange={e => setData('time_of_ride', e.target.value)} />
-                                        {errors.time_of_ride && <p className="text-red-500 text-xs mt-1">{errors.time_of_ride}</p>}
-                                    </div>
-                                </div>
+                                {/* Date of Ride */}
+                                <Field label="Date of Ride *" error={errors.date_of_ride}>
+                                    <DateInput
+                                        value={data.date_of_ride}
+                                        onChange={e => setData('date_of_ride', e.target.value)}
+                                    />
+                                </Field>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <Label>Appointment Time *</Label>
-                                        <Input type="time" value={data.appointment_time} onChange={e => setData('appointment_time', e.target.value)} />
-                                        {errors.appointment_time && <p className="text-red-500 text-xs mt-1">{errors.appointment_time}</p>}
-                                    </div>
-                                    <div>
-                                        <Label>Return Time *</Label>
-                                        <Input type="time" value={data.return_time} onChange={e => setData('return_time', e.target.value)} />
-                                        {errors.return_time && <p className="text-red-500 text-xs mt-1">{errors.return_time}</p>}
-                                    </div>
-                                </div>
+                                {/* Pick Up Time */}
+                                <Field label="Pick Up Time *" error={errors.time_of_ride}>
+                                    <TimePicker
+                                        value={data.time_of_ride}
+                                        onChange={v => setData('time_of_ride', v)}
+                                    />
+                                </Field>
 
-                                <div>
-                                    <Label>Pick Up Location *</Label>
-                                    <Input value={data.pick_up_location} onChange={e => setData('pick_up_location', e.target.value)} placeholder="Pick up location" />
-                                    {errors.pick_up_location && <p className="text-red-500 text-xs mt-1">{errors.pick_up_location}</p>}
-                                </div>
+                                {/* Appointment Time */}
+                                <Field label="Appointment Time *" error={errors.appointment_time}>
+                                    <TimePicker
+                                        value={data.appointment_time}
+                                        onChange={v => setData('appointment_time', v)}
+                                    />
+                                </Field>
 
-                                <div>
-                                    <Label>Drop Off Location *</Label>
-                                    <Input value={data.drop_off_location} onChange={e => setData('drop_off_location', e.target.value)} placeholder="Drop off location" />
-                                    {errors.drop_off_location && <p className="text-red-500 text-xs mt-1">{errors.drop_off_location}</p>}
-                                </div>
+                                {/* Return Time */}
+                                <Field label="Return Time *" error={errors.return_time}>
+                                    <TimePicker
+                                        value={data.return_time}
+                                        onChange={v => setData('return_time', v)}
+                                    />
+                                </Field>
 
-                                <div>
-                                    <Label>Type of Service *</Label>
-                                    <select value={data.type_of_service} onChange={e => setData('type_of_service', e.target.value)} className="w-full h-10 px-3 py-2 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring">
+                                {/* Pick Up Location */}
+                                <Field label="Pick Up Location *" error={errors.pick_up_location}>
+                                    <input
+                                        type="text"
+                                        value={data.pick_up_location}
+                                        onChange={e => setData('pick_up_location', e.target.value)}
+                                        placeholder="Street address"
+                                        className={fieldClass}
+                                    />
+                                </Field>
+
+                                {/* Drop Off Location */}
+                                <Field label="Drop Off Location *" error={errors.drop_off_location}>
+                                    <input
+                                        type="text"
+                                        value={data.drop_off_location}
+                                        onChange={e => setData('drop_off_location', e.target.value)}
+                                        placeholder="Street address"
+                                        className={fieldClass}
+                                    />
+                                </Field>
+
+                                {/* Type of Service */}
+                                <Field label="Type of Service *" error={errors.type_of_service}>
+                                    <select
+                                        value={data.type_of_service}
+                                        onChange={e => setData('type_of_service', e.target.value)}
+                                        className={selClass}
+                                    >
                                         <option value="">Select type of service</option>
-                                        {activities.map(a => <option key={a.id} value={a.id}>{a.description || a.title}</option>)}
+                                        {activities.map(a => (
+                                            <option key={a.id} value={a.id}>{a.description || a.title}</option>
+                                        ))}
                                     </select>
-                                    {errors.type_of_service && <p className="text-red-500 text-xs mt-1">{errors.type_of_service}</p>}
-                                </div>
+                                </Field>
 
-                                <div>
-                                    <Label>Who is covering the cost of the ride? *</Label>
-                                    <select value={data.payer_ride} onChange={e => setData('payer_ride', e.target.value)} className="w-full h-10 px-3 py-2 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring">
+                                {/* Payer */}
+                                <Field label="Who is covering the cost of the ride? *" error={errors.payer_ride}>
+                                    <select
+                                        value={data.payer_ride}
+                                        onChange={e => setData('payer_ride', e.target.value)}
+                                        className={selClass}
+                                    >
                                         <option value="">Select payer</option>
-                                        {payers.map(p => <option key={p.id} value={p.id}>{p.rider_payer}</option>)}
+                                        {payers.map(p => (
+                                            <option key={p.id} value={p.id}>{p.rider_payer}</option>
+                                        ))}
                                     </select>
-                                    {errors.payer_ride && <p className="text-red-500 text-xs mt-1">{errors.payer_ride}</p>}
+                                </Field>
+
+                                {/* Special Instructions */}
+                                <Field label="Special Instructions" error={errors.special_instructions}>
+                                    <textarea
+                                        value={data.special_instructions}
+                                        onChange={e => setData('special_instructions', e.target.value)}
+                                        placeholder="Optional notes for the driver..."
+                                        rows={4}
+                                        className={fieldClass + ' resize-y'}
+                                    />
+                                </Field>
+
+                                {/* Confirmation checkbox */}
+                                <div className="space-y-1">
+                                    <div className="flex items-start gap-3">
+                                        <input
+                                            type="checkbox"
+                                            id="confirmation"
+                                            checked={data.confirmation}
+                                            onChange={e => setData('confirmation', e.target.checked)}
+                                            className="mt-0.5 w-4 h-4 rounded border-gray-300 accent-brand-dark"
+                                        />
+                                        <label htmlFor="confirmation" className="text-sm text-gray-600 leading-relaxed">
+                                            I agree and certify that the provided information is correct and that I am authorized to arrange this ride for the patient.
+                                        </label>
+                                    </div>
+                                    {errors.confirmation && (
+                                        <p className="text-red-500 text-xs flex items-center gap-1">
+                                            <i className="fas fa-circle-exclamation" /> {errors.confirmation}
+                                        </p>
+                                    )}
                                 </div>
 
-                                <div>
-                                    <Label>Special Instructions</Label>
-                                    <Textarea value={data.special_instructions} onChange={e => setData('special_instructions', e.target.value)} placeholder="Special instructions (optional)" rows={4} />
+                                {/* Math CAPTCHA */}
+                                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3">
+                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+                                        <i className="fas fa-shield-halved text-brand-green" />
+                                        Security Check
+                                    </p>
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex-shrink-0 bg-brand-dark text-brand-green font-bold text-sm px-4 py-2.5 rounded-lg tracking-wider">
+                                            {captchaQuestion} = ?
+                                        </div>
+                                        <input
+                                            type="number"
+                                            value={data.captcha_answer}
+                                            onChange={e => setData('captcha_answer', e.target.value)}
+                                            placeholder="Answer"
+                                            className="w-24 bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-center font-semibold outline-none focus:border-brand-dark focus:ring-2 focus:ring-brand-dark/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={refreshCaptcha}
+                                            disabled={refreshing}
+                                            title="Get a new question"
+                                            className="p-2.5 rounded-lg border border-gray-200 bg-white text-gray-400 hover:text-brand-dark hover:border-brand-dark transition-colors disabled:opacity-50"
+                                        >
+                                            <i className={`fas fa-arrows-rotate text-sm ${refreshing ? 'animate-spin' : ''}`} />
+                                        </button>
+                                    </div>
+                                    {errors.captcha_answer && (
+                                        <p className="text-red-500 text-xs flex items-center gap-1">
+                                            <i className="fas fa-circle-exclamation" /> {errors.captcha_answer}
+                                        </p>
+                                    )}
                                 </div>
 
-                                <div className="flex items-start gap-3">
-                                    <input type="checkbox" id="confirmation" checked={data.confirmation} onChange={e => setData('confirmation', e.target.checked)} className="mt-1 w-4 h-4 rounded border-gray-300 accent-brand-dark" required />
-                                    <label htmlFor="confirmation" className="text-sm text-gray-600">
-                                        I agree and certify that the provided information is correct and that I am authorized to arrange this ride for the patient.
-                                    </label>
+                                {/* Submit */}
+                                <div className="pt-1">
+                                    <button
+                                        type="submit"
+                                        disabled={processing}
+                                        className="px-8 py-3 bg-brand-green text-brand-dark rounded-full font-bold text-sm hover:bg-brand-green-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {processing ? (
+                                            <span className="flex items-center gap-2">
+                                                <i className="fas fa-circle-notch fa-spin" />
+                                                Submitting…
+                                            </span>
+                                        ) : 'Submit Booking'}
+                                    </button>
                                 </div>
-                                {errors.confirmation && <p className="text-red-500 text-xs">{errors.confirmation}</p>}
 
-                                <button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="w-full py-3 bg-brand-dark text-brand-green rounded-full font-bold hover:bg-brand-gray transition-all disabled:opacity-50"
-                                >
-                                    {processing ? 'Submitting...' : 'Submit Booking'}
-                                </button>
                             </form>
                         </div>
                     </div>
@@ -198,8 +393,8 @@ export default function Booking({ abouts, activities = [], payers = [] }) {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {[
                             { icon: 'fa-location-dot', label: 'Company Address', value: abouts?.address },
-                            { icon: 'fa-envelope', label: 'E-mail', value: abouts?.email },
-                            { icon: 'fa-phone-alt', label: 'Phone Numbers', value: abouts?.phone },
+                            { icon: 'fa-envelope',     label: 'E-mail',          value: abouts?.email },
+                            { icon: 'fa-phone-alt',    label: 'Phone Numbers',   value: abouts?.phone },
                         ].map((item, i) => (
                             <div key={i} className="bg-white rounded-2xl p-6 text-center shadow-sm border-b-4 border-brand-green hover:shadow-md transition-shadow">
                                 <div className="w-12 h-12 bg-brand-dark rounded-xl flex items-center justify-center mx-auto mb-3">

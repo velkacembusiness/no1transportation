@@ -74,6 +74,14 @@ class HomeController extends Controller
         $activities = Activity::whereIsActive(true)->get();
         $payers = Payer::all();
 
-        return Inertia::render('Booking', compact('abouts', 'activities', 'payers'));
+        [$question, $answer] = self::generateCaptcha();
+        session(['captcha_answer' => $answer]);
+
+        return Inertia::render('Booking', [
+            'abouts'          => $abouts,
+            'activities'      => $activities,
+            'payers'          => $payers,
+            'captchaQuestion' => $question,
+        ]);
     }
 }

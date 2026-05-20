@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Front\HomeController;
 use App\Mail\BookingForm;
 use App\Mail\BookingPatientForm;
 use App\Models\Activity;
 use App\Models\Appointment;
 use App\Models\Payer;
-use App\Rules\ReCaptcha;
 use App\Rules\ValidEmailDns;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -34,8 +34,22 @@ class BookingController extends Controller
             'payer_ride' => ['required', 'exists:payers,id'],
             'special_instructions' => 'nullable',
             'confirmation' => 'accepted',
-            'g-recaptcha-response' => [new ReCaptcha()],
+            'captcha_answer' => ['required', 'integer'],
+        ], [
+            'phone_number.regex'      => 'Please enter a valid phone number in the format (555) 555-5555.',
+            'captcha_answer.required' => 'Please answer the security question.',
         ]);
+
+        if ((int) $request->input('captcha_answer') !== (int) session('captcha_answer')) {
+            [$question, $answer] = HomeController::generateCaptcha();
+            session(['captcha_answer' => $answer]);
+
+            return back()
+                ->withErrors(['captcha_answer' => 'Incorrect answer. A new question has been generated.'])
+                ->withInput();
+        }
+
+        session()->forget('captcha_answer');
 
         $time_of_ride = Carbon::createFromFormat('h:i A', $request->time_of_ride);
         $appointment_time = Carbon::createFromFormat('h:i A', $request->appointment_time);
