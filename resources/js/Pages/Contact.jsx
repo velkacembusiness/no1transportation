@@ -1,4 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
+import { useState } from 'react';
 import PublicLayout from '@/Layouts/PublicLayout';
 
 function BreadcrumbBanner({ title, current }) {
@@ -27,7 +28,11 @@ function Field({ label, error, children }) {
         <div className="space-y-1.5">
             <label className="block text-sm font-medium text-gray-700">{label}</label>
             {children}
-            {error && <p className="text-red-500 text-xs">{error}</p>}
+            {error && (
+                <p className="text-red-500 text-xs flex items-center gap-1">
+                    <i className="fas fa-circle-exclamation" /> {error}
+                </p>
+            )}
         </div>
     );
 }
@@ -35,13 +40,23 @@ function Field({ label, error, children }) {
 const fieldClass =
     'w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-800 placeholder-gray-400 outline-none transition focus:bg-white focus:border-brand-dark focus:ring-2 focus:ring-brand-dark/10';
 
-export default function Contact({ abouts }) {
+function formatPhone(value) {
+    const digits = value.replace(/\D/g, '').slice(0, 10);
+    if (digits.length < 4)  return digits;
+    if (digits.length < 7)  return `(${digits.slice(0,3)}) ${digits.slice(3)}`;
+    return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+}
+
+export default function Contact({ abouts, captchaQuestion: initialQuestion }) {
+    const [captchaQuestion, setCaptchaQuestion] = useState(initialQuestion);
+    const [refreshing, setRefreshing] = useState(false);
+
     const { data, setData, post, processing, errors, reset } = useForm({
-        full_name: '',
-        email_address: '',
-        phone_number: '',
-        message: '',
-        'g-recaptcha-response': '',
+        full_name:      '',
+        email_address:  '',
+        phone_number:   '',
+        message:        '',
+        captcha_answer: '',
     });
 
     function handleSubmit(e) {
@@ -49,11 +64,16 @@ export default function Contact({ abouts }) {
         post(route('contact.store'), { onSuccess: () => reset() });
     }
 
-    function formatPhone(value) {
-        const digits = value.replace(/\D/g, '').slice(0, 10);
-        if (digits.length < 4)  return digits;
-        if (digits.length < 7)  return `(${digits.slice(0,3)}) ${digits.slice(3)}`;
-        return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+    async function refreshCaptcha() {
+        setRefreshing(true);
+        setData('captcha_answer', '');
+        try {
+            const res  = await fetch(route('captcha.refresh'));
+            const json = await res.json();
+            setCaptchaQuestion(json.question);
+        } finally {
+            setRefreshing(false);
+        }
     }
 
     return (
@@ -121,6 +141,43 @@ export default function Contact({ abouts }) {
                                         className={fieldClass + ' resize-y'}
                                     />
                                 </Field>
+
+                                {/* Math CAPTCHA */}
+                                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3">
+                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+                                        <i className="fas fa-shield-halved text-brand-green" />
+                                        Security Check
+                                    </p>
+                                    <div className="flex items-center gap-3">
+                                        {/* Question badge */}
+                                        <div className="flex-shrink-0 bg-brand-dark text-brand-green font-bold text-sm px-4 py-2.5 rounded-lg tracking-wider">
+                                            {captchaQuestion} = ?
+                                        </div>
+                                        {/* Answer input */}
+                                        <input
+                                            type="number"
+                                            value={data.captcha_answer}
+                                            onChange={e => setData('captcha_answer', e.target.value)}
+                                            placeholder="Answer"
+                                            className="w-24 bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-center font-semibold outline-none focus:border-brand-dark focus:ring-2 focus:ring-brand-dark/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        />
+                                        {/* Refresh button */}
+                                        <button
+                                            type="button"
+                                            onClick={refreshCaptcha}
+                                            disabled={refreshing}
+                                            title="Get a new question"
+                                            className="p-2.5 rounded-lg border border-gray-200 bg-white text-gray-400 hover:text-brand-dark hover:border-brand-dark transition-colors disabled:opacity-50"
+                                        >
+                                            <i className={`fas fa-arrows-rotate text-sm ${refreshing ? 'animate-spin' : ''}`} />
+                                        </button>
+                                    </div>
+                                    {errors.captcha_answer && (
+                                        <p className="text-red-500 text-xs flex items-center gap-1">
+                                            <i className="fas fa-circle-exclamation" /> {errors.captcha_answer}
+                                        </p>
+                                    )}
+                                </div>
 
                                 {/* Submit */}
                                 <div className="pt-1">

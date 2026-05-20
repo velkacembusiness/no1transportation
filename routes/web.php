@@ -24,6 +24,7 @@ Route::get('/book-appointment', [HomeController::class, 'booking'])->name('booki
 // ─── Form Submissions ──────────────────────────────────────────────────────────
 Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+Route::get('/captcha/refresh', [ContactController::class, 'refreshCaptcha'])->name('captcha.refresh');
 
 // ─── Auth (Breeze) ─────────────────────────────────────────────────────────────
 require __DIR__.'/auth.php';

@@ -51,7 +51,21 @@ class HomeController extends Controller
     {
         $abouts = About::first();
 
-        return Inertia::render('Contact', compact('abouts'));
+        // Generate a new math captcha each time the page loads
+        [$question, $answer] = self::generateCaptcha();
+        session(['captcha_answer' => $answer]);
+
+        return Inertia::render('Contact', [
+            'abouts'          => $abouts,
+            'captchaQuestion' => $question,
+        ]);
+    }
+
+    public static function generateCaptcha(): array
+    {
+        $a = rand(2, 12);
+        $b = rand(2, 12);
+        return ["{$a} + {$b}", $a + $b];
     }
 
     public function booking()
