@@ -197,7 +197,7 @@ export default function Booking({ abouts, activities = [], payers = [], captchaQ
 
                         {/* Left — illustration */}
                         <div className="hidden lg:flex justify-center">
-                            <img src="/images/contact.png" alt="Book a ride" className="max-w-full h-auto rounded-2xl shadow-lg" />
+                            <img src="/images/contact.png" alt="Book a ride" className="max-w-full h-auto rounded-2xl" />
                         </div>
 
                         {/* Right — form */}
@@ -258,22 +258,24 @@ export default function Booking({ abouts, activities = [], payers = [], captchaQ
                                     </Field>
                                 </div>
 
-                                {/* Date of Ride */}
-                                <Field label="Date of Ride *" error={errors.date_of_ride}>
-                                    <DateInput
-                                        value={data.date_of_ride}
-                                        onChange={iso => setData('date_of_ride', iso)}
-                                    />
-                                </Field>
-
-                                {/* Times — same row */}
-                                <div className="grid grid-cols-3 gap-4">
+                                {/* Date of Ride + Pick Up Time */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Field label="Date of Ride *" error={errors.date_of_ride}>
+                                        <DateInput
+                                            value={data.date_of_ride}
+                                            onChange={iso => setData('date_of_ride', iso)}
+                                        />
+                                    </Field>
                                     <Field label="Pick Up Time *" error={errors.time_of_ride}>
                                         <TimeInput
                                             value={data.time_of_ride}
                                             onChange={v => setData('time_of_ride', v)}
                                         />
                                     </Field>
+                                </div>
+
+                                {/* Appointment Time + Return Time */}
+                                <div className="grid grid-cols-2 gap-4">
                                     <Field label="Appointment Time *" error={errors.appointment_time}>
                                         <TimeInput
                                             value={data.appointment_time}

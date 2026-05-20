@@ -29,8 +29,6 @@ Route::get('/captcha/refresh', [ContactController::class, 'refreshCaptcha'])->na
 // ─── Auth (Breeze) ─────────────────────────────────────────────────────────────
 require __DIR__.'/auth.php';
 
-// Alias so Breeze auth controllers can redirect to 'dashboard'
-Route::get('/admin', [DashboardController::class, 'index'])->name('dashboard')->middleware(['auth', 'verified']);
 
 // ─── Admin Panel (protected by auth) ──────────────────────────────────────────
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified'])->group(function () {
