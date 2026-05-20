@@ -24,6 +24,10 @@ function BreadcrumbBanner({ title, current }) {
 
 const safetyItems = ['CPR/First Aid','PASS (Passenger Assistance Safety and Sensitivity)','Defensive Driving','HIPAA Privacy and Security','Cultural Competency','Drivers Code of Conduct and ADA'];
 
+function stripHtml(html) {
+    return html ? html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim() : '';
+}
+
 export default function Services({ abouts, services }) {
     const { data, links } = services;
 
@@ -62,7 +66,7 @@ export default function Services({ abouts, services }) {
                                                 </Link>
                                             </h3>
                                             {service.description && (
-                                                <p className="text-gray-500 text-sm leading-relaxed line-clamp-3">{service.description}</p>
+                                                <p className="text-gray-500 text-sm leading-relaxed line-clamp-3">{stripHtml(service.description)}</p>
                                             )}
                                             <Link
                                                 href={route('service.show', service.slug)}

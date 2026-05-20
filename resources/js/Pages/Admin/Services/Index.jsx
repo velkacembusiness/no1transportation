@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button';
 export default function ServicesIndex({ services }) {
     const { data, links } = services;
 
-    function handleDelete(id) {
+    function handleDelete(slug) {
         if (confirm('Delete this service?')) {
-            router.delete(route('admin.services.destroy', id));
+            router.delete(route('admin.services.destroy', slug));
         }
     }
 
@@ -51,10 +51,10 @@ export default function ServicesIndex({ services }) {
                                         </td>
                                         <td className="py-3 px-4">
                                             <div className="flex gap-2">
-                                                <Link href={route('admin.services.edit', service.id)}>
+                                                <Link href={route('admin.services.edit', service.slug)}>
                                                     <Button variant="outline" size="sm">Edit</Button>
                                                 </Link>
-                                                <Button variant="destructive" size="sm" onClick={() => handleDelete(service.id)}>
+                                                <Button variant="destructive" size="sm" onClick={() => handleDelete(service.slug)}>
                                                     Delete
                                                 </Button>
                                             </div>
