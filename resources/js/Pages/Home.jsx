@@ -1,7 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import PublicLayout from '@/Layouts/PublicLayout';
 import { useState, useEffect, useRef } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 
 function useReveal() {
     const ref = useRef(null);
@@ -28,13 +27,11 @@ function RevealSection({ children, className = '' }) {
     );
 }
 
-const servicesList = [
-    { icon: 'fa-truck-medical', label: 'Ambulatory Transportation' },
+const allServices = [
     { icon: 'fa-wheelchair', label: 'Wheelchair Transportation' },
     { icon: 'fa-bed', label: 'Stretcher Transportation' },
     { icon: 'fa-stairs', label: 'Stairlift Services' },
     { icon: 'fa-calendar-check', label: "Doctor's Appointment Transportation" },
-    { icon: 'fa-car', label: 'Limo Service' },
 ];
 
 function FAQItem({ faq, defaultOpen }) {
@@ -59,15 +56,20 @@ function FAQItem({ faq, defaultOpen }) {
 }
 
 export default function Home({ abouts, faqs = [] }) {
+    const [servicesList] = useState(() =>
+        [...allServices].sort(() => Math.random() - 0.5).slice(0, 3)
+    );
+
     return (
         <PublicLayout abouts={abouts}>
-            <Head title="Home | NO Transportation LLC" />
+            <Head title="Home | NO 1 Transportation LLC" />
 
-            {/* Hero - dark background with lime accent */}
-            <section className="relative bg-brand-dark text-white py-20 overflow-hidden">
-                {/* Decorative lime stripe */}
-                <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-16 bg-brand-green opacity-10 pointer-events-none" />
-                <div className="absolute top-0 right-0 w-96 h-96 bg-brand-green opacity-5 rounded-full blur-3xl pointer-events-none" />
+            {/* Hero - light background */}
+            <section className="relative bg-white py-20 overflow-hidden">
+                {/* Decorative accents */}
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-brand-green" />
+                <div className="absolute top-0 right-0 w-96 h-96 bg-brand-green opacity-10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-brand-green opacity-5 rounded-full blur-2xl pointer-events-none" />
 
                 <div className="container mx-auto px-4 relative z-10">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -77,19 +79,19 @@ export default function Home({ abouts, faqs = [] }) {
                                 Non-Emergency Medical Transportation
                             </div>
                             <h1 className="text-4xl lg:text-5xl font-extrabold mb-6 leading-tight">
-                                <span className="text-brand-green">NO Transportation</span>
+                                <span className="text-brand-dark">NO 1 Transportation</span>
                                 <br />
-                                <span className="text-white">LLC</span>
+                                <span className="text-brand-dark">LLC</span>
                             </h1>
-                            <p className="text-lg text-gray-300 mb-8 leading-relaxed">
-                                Welcome to <strong className="text-brand-green">NO Transportation LLC</strong> – Your Trusted Partner in Non-Emergency Medical Transportation (NEMT).
+                            <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                                Welcome to <strong className="text-brand-dark">NO Transportation LLC</strong> – Your Trusted Partner in Non-Emergency Medical Transportation (NEMT).
                                 We deliver safe, reliable, and compassionate transportation for individuals who need assistance traveling to and from medical appointments.
                             </p>
                             <div className="flex flex-wrap gap-4">
-                                <Link href={route('booking')} className="px-8 py-3 bg-brand-green text-brand-dark rounded-full font-bold hover:bg-brand-green-dark transition-all shadow-lg">
+                                <Link href={route('booking')} className="px-8 py-3 bg-brand-dark text-brand-green rounded-full font-bold hover:bg-brand-gray transition-all shadow-lg">
                                     Book a Ride
                                 </Link>
-                                <Link href={route('contact')} className="px-8 py-3 border-2 border-brand-green text-brand-green rounded-full font-bold hover:bg-brand-green hover:text-brand-dark transition-all">
+                                <Link href={route('contact')} className="px-8 py-3 border-2 border-brand-dark text-brand-dark rounded-full font-bold hover:bg-brand-dark hover:text-brand-green transition-all">
                                     Contact Us
                                 </Link>
                             </div>
@@ -199,6 +201,40 @@ export default function Home({ abouts, faqs = [] }) {
                             </div>
                         </div>
                     </RevealSection>
+                </div>
+            </section>
+            {/* Contact Info Cards */}
+            <section className="py-16 bg-gray-50">
+                <div className="container mx-auto px-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="bg-white rounded-2xl p-8 text-center shadow-sm border-b-4 border-brand-green">
+                            <div className="w-14 h-14 bg-brand-dark rounded-xl flex items-center justify-center mx-auto mb-4">
+                                <i className="fas fa-location-dot text-brand-green text-xl" />
+                            </div>
+                            <h3 className="font-bold text-brand-dark mb-2">Company Address</h3>
+                            <p className="text-sm text-gray-500 leading-relaxed">{abouts?.address}</p>
+                        </div>
+
+                        <div className="bg-white rounded-2xl p-8 text-center shadow-sm border-b-4 border-brand-green">
+                            <div className="w-14 h-14 bg-brand-dark rounded-xl flex items-center justify-center mx-auto mb-4">
+                                <i className="fas fa-envelope text-brand-green text-xl" />
+                            </div>
+                            <h3 className="font-bold text-brand-dark mb-2">E-mail</h3>
+                            <a href={`mailto:${abouts?.email}`} className="text-sm text-gray-500 hover:text-brand-dark transition-colors">
+                                {abouts?.email}
+                            </a>
+                        </div>
+
+                        <div className="bg-white rounded-2xl p-8 text-center shadow-sm border-b-4 border-brand-green">
+                            <div className="w-14 h-14 bg-brand-dark rounded-xl flex items-center justify-center mx-auto mb-4">
+                                <i className="fas fa-phone text-brand-green text-xl" />
+                            </div>
+                            <h3 className="font-bold text-brand-dark mb-2">Phone Numbers</h3>
+                            <a href={`tel:${abouts?.phone}`} className="text-sm text-gray-500 hover:text-brand-dark transition-colors">
+                                {abouts?.phone}
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </section>
         </PublicLayout>

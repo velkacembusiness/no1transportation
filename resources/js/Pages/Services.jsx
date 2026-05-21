@@ -151,6 +151,40 @@ export default function Services({ abouts, services }) {
                     </div>
                 </div>
             </section>
+            {/* Contact Info Cards */}
+            <section className="py-16 bg-gray-50">
+                <div className="container mx-auto px-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="bg-white rounded-2xl p-8 text-center shadow-sm border-b-4 border-brand-green">
+                            <div className="w-14 h-14 bg-brand-dark rounded-xl flex items-center justify-center mx-auto mb-4">
+                                <i className="fas fa-location-dot text-brand-green text-xl" />
+                            </div>
+                            <h3 className="font-bold text-brand-dark mb-2">Company Address</h3>
+                            <p className="text-sm text-gray-500 leading-relaxed">{abouts?.address}</p>
+                        </div>
+
+                        <div className="bg-white rounded-2xl p-8 text-center shadow-sm border-b-4 border-brand-green">
+                            <div className="w-14 h-14 bg-brand-dark rounded-xl flex items-center justify-center mx-auto mb-4">
+                                <i className="fas fa-envelope text-brand-green text-xl" />
+                            </div>
+                            <h3 className="font-bold text-brand-dark mb-2">E-mail</h3>
+                            <a href={`mailto:${abouts?.email}`} className="text-sm text-gray-500 hover:text-brand-dark transition-colors">
+                                {abouts?.email}
+                            </a>
+                        </div>
+
+                        <div className="bg-white rounded-2xl p-8 text-center shadow-sm border-b-4 border-brand-green">
+                            <div className="w-14 h-14 bg-brand-dark rounded-xl flex items-center justify-center mx-auto mb-4">
+                                <i className="fas fa-phone text-brand-green text-xl" />
+                            </div>
+                            <h3 className="font-bold text-brand-dark mb-2">Phone Numbers</h3>
+                            <a href={`tel:${abouts?.phone}`} className="text-sm text-gray-500 hover:text-brand-dark transition-colors">
+                                {abouts?.phone}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </PublicLayout>
     );
 }

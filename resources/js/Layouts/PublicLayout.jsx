@@ -29,7 +29,7 @@ function Header({ abouts }) {
             <div className="bg-brand-dark text-white text-sm py-2">
                 <div className="container mx-auto px-4 flex justify-between items-center">
                     <span>
-                        Welcome to <span className="text-brand-green font-semibold">NO Transportation LLC</span>
+                        Welcome to <span className="text-brand-green font-semibold">NO 1 Transportation LLC</span>
                         {abouts?.phone && (
                             <> &nbsp;|&nbsp; Call:{' '}
                                 <a href={`tel:${abouts.phone}`} className="text-brand-green hover:underline">{abouts.phone}</a>
